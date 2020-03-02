@@ -74,6 +74,16 @@ def check_style(filename):
     return (len(stdout.splitlines()[1:-1]) == 0, "\n" + stdout)
 
 
+def bash(name, args=[], timeout=30):
+    """
+    Runs the specified bash program using the specified command-line arguments and timeout, 
+    and returns the tuple (<success flag>, <stdout>).
+    """
+
+    success, stdout = run("bash", [name] + args)
+    return (success, stdout)
+
+
 def slot(a, b, x, n=10):
     """
     Breaks the interval [a, b) into n slots and returns the slot number [1, n] that x belongs to.
