@@ -63,6 +63,14 @@ def java(name, args=[], stdin=None, timeout=30):
     success, stdout = run("java", [name] + args, stdin, timeout)
     return (success, stdout)
 
+def spim(name, args=[], stdin=None, timeout=30):
+    """
+    Runs the specified spim program using the specified command-line arguments, standard input,
+    and timeout, and returns the tuple (<success flag>, <stdout>).
+    """
+
+    success, stdout = run("spim", ["-f", name] + args, stdin, timeout)
+    return (success, stdout)
 
 def check_style(filename):
     """
@@ -72,16 +80,6 @@ def check_style(filename):
 
     success, stdout = run("check_style", [filename])
     return (len(stdout.splitlines()[1:-1]) == 0, "\n" + stdout)
-
-
-def bash(name, args=[], timeout=30):
-    """
-    Runs the specified bash program using the specified command-line arguments and timeout, 
-    and returns the tuple (<success flag>, <stdout>).
-    """
-
-    success, stdout = run("bash", [name] + args)
-    return (success, stdout)
 
 
 def slot(a, b, x, n=10):
