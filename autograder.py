@@ -1,5 +1,7 @@
 import datetime, os, signal, subprocess, time
 
+CORRECT = u"\u2714"
+WRONG = u"\u2718"
 
 def run(cmd, args=[], stdin=None, timeout=30):
     """
@@ -25,25 +27,29 @@ def run(cmd, args=[], stdin=None, timeout=30):
     return (process.returncode == 0, stdout)
 
 
-def python3(name, args=[], stdin=None, timeout=30):
-    """
-    Runs the specified Python program using the specified command-line arguments, standard input,
-    and timeout, and returns the tuple (<success flag>, <stdout>).
-    """
-
+def python3(name, args=[], stdin=None, timeout=30, f=None):
+    cmd = "python3 %s" %(name)
+    if len(args) > 0:
+        cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
+    if stdin:
+        cmd = "echo '%s' | %s" %(stdin, cmd)
+    print(cmd, end=" ")
     success, stdout = run("python3", [name] + args, stdin, timeout)
-    return (success, stdout)
+    try:
+        f(stdout.strip())
+    except AssertionError as e:
+        print(WRONG)
+        raise e
+    print(CORRECT)
 
 
 def pycodestyle(filename):
-    """
-    Runs the pycodestyle program on the specified Python program, and returns the tuple (<success
-    flag>, <stdout>).
-    """
-
+    print("pycodestyle %s " %(filename), end="")
     success, stdout = run("pycodestyle", [filename])
-    return (stdout == "", "\n" + stdout)
-
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stdout)
+    print(CORRECT)
 
 def javac(name, args=[]):
     """
