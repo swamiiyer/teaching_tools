@@ -36,7 +36,7 @@ def python3(name, args=[], stdin=None, timeout=30, f=None):
     print(cmd, end=" ")
     success, stdout = run("python3", [name] + args, stdin, timeout)
     try:
-        f(stdout.strip())
+        f(stdout)
     except AssertionError as e:
         print(WRONG)
         raise e
