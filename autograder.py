@@ -1,14 +1,11 @@
-import datetime, os, signal, subprocess, time
+import datetime, _io, os, signal, subprocess, time
 
-CORRECT = u"\u2714"
-WRONG = u"\u2718"
+_CORRECT = u"\u2714"
+_WRONG = u"\u2718"
 
+# Runs the specified command using the specified command-line arguments, standard input,
+# and timeout, and returns the tuple (<success flag>, <output>).
 def run(cmd, args=[], stdin=None, timeout=30):
-    """
-    Runs the specified command using the specified command-line arguments, standard input,
-    and timeout, and returns the tuple (<success flag>, <output>).
-    """
-
     start = datetime.datetime.now()
     process = subprocess.Popen([cmd] + args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT)
@@ -31,77 +28,58 @@ def python3(name, args=[], stdin=None, timeout=30, f=None):
     cmd = "python3 %s" %(name)
     if len(args) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
+    stdintext = None
     if stdin:
-        cmd = "echo '%s' | %s" %(stdin, cmd)
+        if isinstance(stdin, _io.TextIOWrapper):
+            cmd = "%s < %s" %(cmd, stdin.name)
+            stdintext = stdin.read()
+        else:
+            cmd = "echo '%s' | %s" %(stdin, cmd)
+            stdintext = stdin
     print(cmd, end=" ")
-    success, stdout = run("python3", [name] + args, stdin, timeout)
+    success, stdout = run("python3", [name] + args, stdintext, timeout)
     try:
-        f(stdout)
+        if f:
+            f(stdout)
     except AssertionError as e:
-        print(WRONG)
+        print(_WRONG)
         raise e
-    print(CORRECT)
+    print(_CORRECT)
 
 
 def pycodestyle(filename):
     print("pycodestyle %s " %(filename), end="")
     success, stdout = run("pycodestyle", [filename])
     if not success:
-        print(WRONG)
+        print(_WRONG)
         raise AssertionError("\n" + stdout)
-    print(CORRECT)
+    print(_CORRECT)
 
+# Compiles the specified Java program, and returns the tuple (<success flag>, <stdout>).
 def javac(name, args=[]):
-    """
-    Compiles the specified Java program, and returns the tuple (<success flag>, <stdout>).
-    """
-
     success, stdout = run("javac", [name] + args)
     return (success, stdout)
 
-
+# Runs the specified Java program using the specified command-line arguments, standard input,
+# and timeout, and returns the tuple (<success flag>, <stdout>).
 def java(name, args=[], stdin=None, timeout=30):
-    """
-    Runs the specified Java program using the specified command-line arguments, standard input,
-    and timeout, and returns the tuple (<success flag>, <stdout>).
-    """
-
     success, stdout = run("java", [name] + args, stdin, timeout)
     return (success, stdout)
 
+# Runs the specified spim program using the specified command-line arguments, standard input,
+# and timeout, and returns the tuple (<success flag>, <stdout>).
 def spim(name, args=[], stdin=None, timeout=30):
-    """
-    Runs the specified spim program using the specified command-line arguments, standard input,
-    and timeout, and returns the tuple (<success flag>, <stdout>).
-    """
-
     success, stdout = run("spim", ["-f", name] + args, stdin, timeout)
     return (success, stdout)
 
-def check_style(filename):
-    """
-    Runs the check_style program on the specified Java program, and returns the tuple (<success
-    flag>, <stdout>).
-    """
-
-    success, stdout = run("check_style", [filename])
-    return (len(stdout.splitlines()[1:-1]) == 0, "\n" + stdout)
-
-
+# Runs the specified bash program using the specified command-line arguments and timeout, 
+# and returns the tuple (<success flag>, <stdout>).
 def bash(name, args=[], timeout=30):
-    """
-    Runs the specified bash program using the specified command-line arguments and timeout, 
-    and returns the tuple (<success flag>, <stdout>).
-    """
-
     success, stdout = run("bash", [name] + args)
     return (success, stdout)
 
+# Breaks the interval [a, b) into n slots and returns the slot number [1, n] that x belongs to.
 def slot(a, b, x, n=10):
-    """
-    Breaks the interval [a, b) into n slots and returns the slot number [1, n] that x belongs to.
-    """
-
     dx = (b - a) / n
     i = 1
     c = a + dx
