@@ -23,8 +23,8 @@ def run(cmd, args=[], stdin=None, timeout=30):
     process.stdout.close()
     return (process.returncode == 0, stdout)
 
-
-def python3(name, args=[], stdin=None, timeout=30, f=None):
+#
+def python3(name, args=[], stdin=None, timeout=30, outfile=None, f=None):
     cmd = "python3 %s" %(name)
     if len(args) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
@@ -38,6 +38,11 @@ def python3(name, args=[], stdin=None, timeout=30, f=None):
             stdintext = stdin
     print(cmd, end=" ")
     success, stdout = run("python3", [name] + args, stdintext, timeout)
+    if outfile:
+        print("> %s" %(outfile), end=" ")
+        fh = open(outfile, "w")
+        fh.write(stdout)
+        fh.close()
     try:
         if f:
             f(stdout)
@@ -45,8 +50,20 @@ def python3(name, args=[], stdin=None, timeout=30, f=None):
         print(_WRONG)
         raise e
     print(_CORRECT)
+    return success, stdout
 
+#
+def function(name, f=None):
+    print(name, end=" ")
+    try:
+        if f:
+            f()
+    except AssertionError as e:
+        print(_WRONG)
+        raise e
+    print(_CORRECT)
 
+#
 def pycodestyle(filename):
     print("pycodestyle %s " %(filename), end="")
     success, stdout = run("pycodestyle", [filename])
