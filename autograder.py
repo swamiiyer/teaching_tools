@@ -77,6 +77,18 @@ def pycodestyle(filename):
     print(_CORRECT)
     return success, stdout
 
+def ant(opts=[]):
+    cmd = "ant"
+    if len(opts) > 0:
+        cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
+    print("%s " %(cmd), end="")
+    success, stdout = run("ant", opts)
+    if not success:
+        print(_WRONG)
+        raise AssertionError("\n" + stdout)
+    print(_CORRECT)
+    return success, stdout
+
 def javac(name, opts=[]):
     cmd = "javac"
     if len(opts) > 0:
