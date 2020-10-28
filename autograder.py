@@ -118,6 +118,22 @@ def jmm(name, opts=[], f=None):
     print(_CORRECT)
     return success, stdout
 
+def javaccjmm(name, opts=[], f=None):
+    cmd = "./bin/javaccj--"
+    if len(opts) > 0:
+        cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
+    cmd += " " + name
+    print("%s " %(cmd), end="")
+    success, stdout = run("./bin/javaccj--", opts + [name])
+    try:
+        if f:
+            f(stdout)
+    except AssertionError as e:
+        print(_WRONG)
+        raise e
+    print(_CORRECT)
+    return success, stdout
+
 def java(name, opts=[], args=[], f=None):
     cmd = "java"
     if len(opts) > 0:
