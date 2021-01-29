@@ -70,7 +70,7 @@ def function(name, f=None):
 
 def pycodestyle(filename, timeout=30):
     print("pycodestyle %s " %(filename), end="")
-    success, stdout = run("pycodestyle", [filename], timeout)
+    success, stdout = run("pycodestyle", [filename], None, timeout)
     if not success:
         print(_WRONG)
         raise AssertionError("\n" + stdout)
@@ -82,7 +82,7 @@ def ant(opts=[], timeout=30):
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
     print("%s " %(cmd), end="")
-    success, stdout = run("ant", opts, timeout)
+    success, stdout = run("ant", opts, None, timeout)
     if not success:
         print(_WRONG)
         raise AssertionError("\n" + stdout)
@@ -95,7 +95,7 @@ def javac(name, opts=[], timeout=30):
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
     cmd += " " + name
     print("%s " %(cmd), end="")
-    success, stdout = run("javac", opts + [name], timeout)
+    success, stdout = run("javac", opts + [name], None, timeout)
     if not success:
         print(_WRONG)
         raise AssertionError("\n" + stdout)
@@ -108,7 +108,7 @@ def jmm(name, opts=[], f=None, timeout=30):
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
     cmd += " " + name
     print("%s " %(cmd), end="")
-    success, stdout = run("./bin/j--", opts + [name], timeout)
+    success, stdout = run("./bin/j--", opts + [name], None, timeout)
     try:
         if f:
             f(stdout)
@@ -124,7 +124,7 @@ def javaccjmm(name, opts=[], f=None, timeout=30):
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
     cmd += " " + name
     print("%s " %(cmd), end="")
-    success, stdout = run("./bin/javaccj--", opts + [name], timeout)
+    success, stdout = run("./bin/javaccj--", opts + [name], None, timeout)
     try:
         if f:
             f(stdout)
@@ -142,7 +142,7 @@ def java(name, opts=[], args=[], f=None, timeout=30):
     if len(args) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
     print("%s " %(cmd), end="")
-    success, stdout = run("java", opts + [name] + args, timeout)
+    success, stdout = run("java", opts + [name] + args, None, timeout)
     try:
         if f:
             f(stdout)
@@ -155,7 +155,7 @@ def java(name, opts=[], args=[], f=None, timeout=30):
 def spim(name, timeout=30):
     cmd = "spim -f " + name
     print("%s " %(cmd), end="")
-    success, stdout = run("spim", ["-f", name], timeout)
+    success, stdout = run("spim", ["-f", name], None, timeout)
     try:
         if f:
             f(stdout)
