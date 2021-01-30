@@ -39,7 +39,7 @@ def python3(name, args=[], stdin=None, timeout=30, outfile=None, f=None):
         fh.close()
     try:
         if f:
-            f(stdout, stderr)
+            f(stdout)
     except AssertionError as e:
         print(_WRONG)
         raise e
@@ -79,7 +79,7 @@ def java(name, opts=[], args=[], f=None, timeout=30):
     success, stdout, stderr = run("java", opts + [name] + args, None, timeout)
     try:
         if f:
-            f(stdout, stderr)
+            f(stdout)
     except AssertionError as e:
         print(_WRONG)
         raise e
@@ -107,7 +107,7 @@ def jmm(name, opts=[], f=None, timeout=30):
     success, stdout, stderr = run("./bin/j--", opts + [name], None, timeout)
     try:
         if f:
-            f(stdout, stderr)
+            f(stdout)
     except AssertionError as e:
         print(_WRONG)
         raise e
@@ -123,7 +123,7 @@ def javaccjmm(name, opts=[], f=None, timeout=30):
     success, stdout, stderr = run("./bin/javaccj--", opts + [name], None, timeout)
     try:
         if f:
-            f(stdout, stderr)
+            f(stdout)
     except AssertionError as e:
         print(_WRONG)
         raise e
@@ -139,7 +139,7 @@ def spim(name, timeout=30, f=None):
     success, stdout, stderr = run("spim", ["-f", name], None, timeout)
     try:
         if f:
-            f(stdout, stderr)
+            f(stdout)
     except AssertionError as e:
         print(_WRONG)
         raise e
