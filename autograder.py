@@ -6,7 +6,7 @@ _WRONG = u"\u2718"
 def run(cmd, args=[], stdin=None, timeout=30):
     try:
         cp = subprocess.run([cmd] + args,
-                            stdin= bytes(stdin, "utf-8") if stdin else None,
+                            input=bytes(stdin, "utf-8") if stdin else None,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     except subprocess.TimeoutExpired as e:
