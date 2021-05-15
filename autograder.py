@@ -7,6 +7,7 @@ def run(cmd, args=[], stdin=None, timeout=30):
     try:
         cp = subprocess.run([cmd] + args,
                             input=bytes(stdin, "utf-8") if stdin else None,
+                            timeout=timeout,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     except subprocess.TimeoutExpired as e:
