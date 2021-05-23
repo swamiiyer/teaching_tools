@@ -1,4 +1,4 @@
-import _io, os, subprocess
+import _io, os, psutil, subprocess
 
 CORRECT = u"\u2714"
 WRONG = u"\u2718"
@@ -14,7 +14,9 @@ def run(cmd, args=[], input=None, timeout=30):
     try:
         stdout, stderr = proc.communicate(bytes(input, "utf-8") if input else None, timeout)
     except subprocess.TimeoutExpired as e:
-        proc.kill()
+        for child in psutil.Process(proc.pid).children(recursive=True):
+            child.kill()
+        proc.kill()           
         return (False, "", "Error: %ss timeout expired" %(timeout))
     return (True, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
