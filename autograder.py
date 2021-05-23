@@ -1,161 +1,190 @@
 import _io, os, subprocess
 
-_CORRECT = u"\u2714"
-_WRONG = u"\u2718"
+CORRECT = u"\u2714"
+WRONG = u"\u2718"
 
-def run(cmd, args=[], stdin=None, timeout=30):
+def run(cmd, args=[], input=None, timeout=30):
     try:
-        cp = subprocess.run([cmd] + args,
-                            input=bytes(stdin, "utf-8") if stdin else None,
-                            timeout=timeout,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    except subprocess.TimeoutExpired as e:
-        return (False, "Error: %ss timeout expired" %(timeout), "")
+        proc = subprocess.Popen([cmd] + args,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
     except:
-        return (False, "Error: unable to run command '%s'" %(cmd), "")
-    return (cp.returncode == 0, cp.stdout.decode("utf-8"), cp.stderr.decode("utf-8"))
+        return (False, "", "Error: unable to run command '%s'" %(cmd))
+    try:
+        stdout, stderr = proc.communicate(bytes(input, "utf-8") if input else None, timeout)
+    except subprocess.TimeoutExpired as e:
+        proc.kill()
+        return (False, "", "Error: %ss timeout expired" %(timeout))
+    return (True, stdout.decode("utf-8"), stderr.decode("utf-8"))
 
-def python3(name, args=[], stdin=None, timeout=30, outfile=None, f=None):
+def python3(name, args=[], input=None, timeout=30, outfile=None, tester=None):
     cmd = "python3 %s" %(name)
     if len(args) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
-    stdintext = None
-    if stdin:
-        if isinstance(stdin, _io.TextIOWrapper):
-            cmd = "%s < %s" %(cmd, stdin.name)
-            stdintext = stdin.read()
+    inputtext = None
+    if input:
+        if isinstance(input, _io.TextIOWrapper):
+            cmd = "%s < %s" %(cmd, input.name)
+            inputtext = input.read()
         else:
-            cmd = "echo '%s' | %s" %(stdin, cmd)
-            stdintext = stdin
+            cmd = "echo '%s' | %s" %(input, cmd)
+            inputtext = input
     print(cmd, end=" ")
-    success, stdout, stderr = run("python3", [name] + args, stdintext, timeout)
+    success, stdout, stderr = run("python3", [name] + args, inputtext, timeout)
     if not success:
-        print(_WRONG)
-        raise AssertionError("\n" + stderr + "\n" + stdout)
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
     if outfile:
         print("> %s" %(outfile), end=" ")
         fh = open(outfile, "w")
         fh.write(stdout)
         fh.close()
     try:
-        if f:
-            f(stdout, stderr)
+        if tester:
+            tester(stdout, stderr)
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
-    return success, stdout, stderr
+    print(CORRECT)
 
 def pycodestyle(filename, timeout=30):
     print("pycodestyle %s " %(filename), end="")
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
     success, stdout, stderr = run("pycodestyle", [filename], None, timeout)
     if not success:
-        print(_WRONG)
-        raise AssertionError("\n" + stderr + "\n" + stdout)
-    print(_CORRECT)
-    return success, stdout, stderr
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
+    if stdout != "":
+        print(WRONG)
+        raise AssertionError("\n" + stdout)
+    print(CORRECT)
 
-def javac(name, opts=[], timeout=30):
+def javac(filename, opts=[], timeout=30):
     cmd = "javac"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
-    cmd += " " + name
+    cmd += " " + filename
     print("%s " %(cmd), end="")
-    success, stdout, stderr = run("javac", opts + [name], None, timeout)
-    if not success:
-        print(_WRONG)
-        raise AssertionError("\n" + stderr + "\n" + stdout)
-    print(_CORRECT)
-    return success, stdout, stderr
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
+    success, stdout, stderr = run("javac", opts + [filename], None, timeout)
+    if not success or stderr != "":
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
+    print(CORRECT)
 
-def java(name, opts=[], args=[], f=None, timeout=30):
+def java(filename, opts=[], args=[], tester=None, timeout=30):
     cmd = "java"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
-    cmd += " " + name
+    cmd += " " + filename
     if len(args) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in args])
     print("%s " %(cmd), end="")
-    success, stdout, stderr = run("java", opts + [name] + args, None, timeout)
+    if not os.path.isfile("%s.class" %(filename)):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s.class'" %(filename))
+    success, stdout, stderr = run("java", opts + [filename] + args, None, timeout)
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
     try:
-        if f:
-            f(stdout, stderr)
+        if tester:
+            tester(stdout, stderr)
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
-    return success, stdout, stderr
+    print(CORRECT)
 
 def ant(opts=[], timeout=30):
     cmd = "ant"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
     print("%s " %(cmd), end="")
+    if not os.path.isfile("build.xml"):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file 'build.xml'")
     success, stdout, stderr = run("ant", opts, None, timeout)
     if not success:
-        print(_WRONG)
-        raise AssertionError("\n" + stderr + "\n" + stdout)
-    print(_CORRECT)
-    return success, stdout, stderr
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
+    if "SUCCESSFUL" not in stdout:
+        print(WRONG)
+        raise AssertionError("\n" + stdout)
+    print(CORRECT)
 
-def jmm(name, opts=[], f=None, timeout=30):
+def jmm(filename, opts=[], tester=None, timeout=30):
     cmd = "j--"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
-    cmd += " " + name
+    cmd += " " + filename
     print("%s " %(cmd), end="")
-    success, stdout, stderr = run("./bin/j--", opts + [name], None, timeout)
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
+    success, stdout, stderr = run("./bin/j--", opts + [filename], None, timeout)
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
     try:
-        if f:
-            f(stdout, stderr)
+        if tester:
+            tester(stdout, stderr)
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
-    return success, stdout, stderr
+    print(CORRECT)
 
-def javaccjmm(name, opts=[], f=None, timeout=30):
+def javaccjmm(filename, opts=[], tester=None, timeout=30):
     cmd = "javaccj--"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
-    cmd += " " + name
+    cmd += " " + filename
     print("%s " %(cmd), end="")
-    success, stdout, stderr = run("./bin/javaccj--", opts + [name], None, timeout)
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
+    success, stdout, stderr = run("./bin/javaccj--", opts + [filename], None, timeout)
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
     try:
-        if f:
-            f(stdout, stderr)
+        if tester:
+            tester(stdout, stderr)
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
-    return success, stdout, stderr
+    print(CORRECT)
 
-def spim(name, timeout=30, f=None):
-    cmd = "spim -f " + name
-    print("%s " %(cmd), end="")
-    if not os.path.isfile(name):
-        print(_WRONG)
-        raise AssertionError("\nError: cannot find file '%s'" %(name))
-    success, stdout, stderr = run("spim", ["-f", name], None, timeout)
+def spim(filename, timeout=30, tester=None):
+    print("spim -f %s " %(filename), end="")
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
+    success, stdout, stderr = run("spim", ["-f", filename], None, timeout)
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
     try:
-        if f:
-            f(stdout, stderr)
+        if tester:
+            tester(stdout, stderr)
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
-    return success, stdout, stderr
+    print(CORRECT)
 
-def function(name, f=None):
+def function(name, tester=None):
     print(name, end=" ")
     try:
-        if f:
-            f()
+        if tester:
+            tester()
     except AssertionError as e:
-        print(_WRONG)
+        print(WRONG)
         raise e
-    print(_CORRECT)
+    print(CORRECT)
 
 def slot(a, b, x, n=10):
     dx = (b - a) / n
