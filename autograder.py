@@ -50,20 +50,6 @@ def python3(name, args=[], input=None, timeout=30, outfile=None, tester=None):
         raise e
     print(CORRECT)
 
-def pycodestyle(filename, timeout=30):
-    print("pycodestyle %s " %(filename), end="")
-    if not os.path.isfile(filename):
-        print(WRONG)
-        raise AssertionError("\nError: cannot find file '%s'" %(filename))
-    success, stdout, stderr = run("pycodestyle", [filename], None, timeout)
-    if not success:
-        print(WRONG)
-        raise AssertionError("\n" + stderr)
-    if stdout != "":
-        print(WRONG)
-        raise AssertionError("\n" + stdout)
-    print(CORRECT)
-
 def javac(filename, opts=[], timeout=30):
     cmd = "javac"
     if len(opts) > 0:
@@ -119,6 +105,27 @@ def ant(opts=[], timeout=30):
         raise AssertionError("\n" + stdout)
     print(CORRECT)
 
+def iota(filename, opts=[], tester=None, timeout=30):
+    cmd = "iota"
+    if len(opts) > 0:
+        cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
+    cmd += " " + filename
+    print("%s " %(cmd), end="")
+    if not os.path.isfile(filename):
+        print(WRONG)
+        raise AssertionError("\nError: cannot find file '%s'" %(filename))
+    success, stdout, stderr = run("./bin/iota", opts + [filename], None, timeout)
+    if not success:
+        print(WRONG)
+        raise AssertionError("\n" + stderr)
+    try:
+        if tester:
+            tester(stdout, stderr)
+    except AssertionError as e:
+        print(WRONG)
+        raise e
+    print(CORRECT)
+
 def jmm(filename, opts=[], tester=None, timeout=30):
     cmd = "j--"
     if len(opts) > 0:
@@ -150,23 +157,6 @@ def javaccjmm(filename, opts=[], tester=None, timeout=30):
         print(WRONG)
         raise AssertionError("\nError: cannot find file '%s'" %(filename))
     success, stdout, stderr = run("./bin/javaccj--", opts + [filename], None, timeout)
-    if not success:
-        print(WRONG)
-        raise AssertionError("\n" + stderr)
-    try:
-        if tester:
-            tester(stdout, stderr)
-    except AssertionError as e:
-        print(WRONG)
-        raise e
-    print(CORRECT)
-
-def spim(filename, timeout=30, tester=None):
-    print("spim -f %s " %(filename), end="")
-    if not os.path.isfile(filename):
-        print(WRONG)
-        raise AssertionError("\nError: cannot find file '%s'" %(filename))
-    success, stdout, stderr = run("spim", ["-f", filename], None, timeout)
     if not success:
         print(WRONG)
         raise AssertionError("\n" + stderr)
