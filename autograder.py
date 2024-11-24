@@ -30,7 +30,7 @@ def python3(name, args=[], input=None, timeout=30, outfile=None, tester=None):
             cmd = "%s < %s" %(cmd, input.name)
             inputtext = input.read()
         else:
-            cmd = "echo '%s' | %s" %(input, cmd)
+            cmd = "echo -e '%s' | %s" %(input.replace(" ", "\n"), cmd)
             inputtext = input
     print(cmd, end=" ")
     success, stdout, stderr = run("python3", [name] + args, inputtext, timeout)
