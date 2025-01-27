@@ -123,10 +123,9 @@ def javac(name, opts=[]):
     return 1
 
 # Compiles the j-- program with the given name (name), options (opts), and testing function 
-# (tester). If not successful, returns 0. Otherwise, does the following: if tester is specified, 
-# calls it with the stdout and stderr strings from the j-- compiler; and returns 1 if tester does 
-# not result in an assertion error, and 0 if it does. 
-def jmm(name, opts=[], tester=None):
+# (tester). Calls the tester with the stdout and stderr strings from the j-- compiler; and
+# returns 1 if tester does not result in an assertion error, and 0 if it does. 
+def jmm(name, opts=[], tester):
     cmd = "./bin/j--"
     if len(opts) > 0:
         cmd += " " + " ".join(["'%s'" %(v) if " " in v else v for v in opts])
@@ -137,13 +136,8 @@ def jmm(name, opts=[], tester=None):
         print("%s not found" %(name))
         return 0
     success, stdout, stderr = _run("./bin/j--", opts + [name])
-    if not success or stderr != "":
-        print(_WRONG)
-        print(stderr)
-        return 0
     try:
-        if tester:
-            tester(stdout.strip(), stderr.strip())
+        tester(stdout.strip(), stderr.strip())
     except AssertionError as e:
         print(_WRONG)
         print(e)
